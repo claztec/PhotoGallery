@@ -23,6 +23,7 @@ public class PollService extends IntentService {
 
     private static final String TAG = "PollService";
     private static final long POLL_INTERNAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
+    public static final String ACTION_SHOW_NOTIFICATION = "net.claztec.android.photogallery.SHOW_NOTIFICATION";
 
     public static Intent newIntent(Context context) {
         return new Intent(context, PollService.class);
@@ -34,11 +35,13 @@ public class PollService extends IntentService {
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (isOn) {
-            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), POLL_INTERNAL, pi);
+            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), 60 * 1000, pi);
         } else {
             alarmManager.cancel(pi);
             pi.cancel();
         }
+
+        QueryPreferences.setAlarmOn(context, isOn);
     }
 
     public static boolean isServiceAlarmOn(Context context) {
@@ -92,6 +95,7 @@ public class PollService extends IntentService {
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
             notificationManager.notify(0, notification);
 
+            sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION));
         }
 
         QueryPreferences.setLastResultId(this, lastResultId);
