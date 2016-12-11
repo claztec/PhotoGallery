@@ -3,6 +3,9 @@ package net.claztec.android.photogallery;
 import android.net.Uri;
 import android.util.Log;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,6 +16,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static net.claztec.android.photogallery.PhotoGalleryFragment.TAG;
@@ -30,6 +34,7 @@ public class FlickrFetchr {
             .appendQueryParameter("format", "json")
             .appendQueryParameter("nojsoncallback", "1")
             .appendQueryParameter("extras", "url_s")
+            .appendQueryParameter("per_page", "20")
             .build();
 
     List<GalleryItem> items = new ArrayList<>();
@@ -88,7 +93,8 @@ public class FlickrFetchr {
             String jsonString = getUrlString(url);
             Log.i(TAG, "Received JSON: " + jsonString);
             JSONObject jsonBody = new JSONObject(jsonString);
-            parseItems(items, jsonBody);
+//            parseItems(items, jsonBody);
+            items = parseItemsByGson(jsonBody);
         } catch (JSONException e) {
             Log.e(TAG, "Failed to parse JSON", e);
         } catch (IOException e) {
@@ -96,6 +102,13 @@ public class FlickrFetchr {
         }
 
         return items;
+    }
+
+    private List<GalleryItem> parseItemsByGson(JSONObject jsonBody) throws JSONException {
+        Gson gson = new GsonBuilder().create();
+        JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
+        JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
+        return Arrays.asList(gson.fromJson(photoJsonArray.toString(), GalleryItem[].class));
     }
 
     private void parseItems(List<GalleryItem> items, JSONObject jsonBody) throws JSONException {

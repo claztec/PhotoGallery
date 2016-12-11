@@ -2,13 +2,19 @@ package net.claztec.android.photogallery;
 
 import android.net.Uri;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by Derek Choi on 2016. 9. 18..
  */
 public class GalleryItem {
+    @SerializedName("title")
     private String mCaption;
+    @SerializedName("id")
     private String mId;
+    @SerializedName("url_s")
     private String mUrl;
+    @SerializedName("owner")
     private String mOwner;
 
     public String getCaption() {
