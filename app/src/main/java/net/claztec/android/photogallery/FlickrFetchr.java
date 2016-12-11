@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -13,6 +14,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ public class FlickrFetchr {
             .appendQueryParameter("format", "json")
             .appendQueryParameter("nojsoncallback", "1")
             .appendQueryParameter("extras", "url_s")
-            .appendQueryParameter("per_page", "20")
+            .appendQueryParameter("per_page", "9")
             .build();
 
     List<GalleryItem> items = new ArrayList<>();
@@ -68,47 +70,50 @@ public class FlickrFetchr {
         return new String(getUrlBytes(urlSpec));
     }
 
-    public List<GalleryItem> fetchRecentPhotos() {
-        String url = buildUrl(FETCH_RECENTS_METHOD, null);
+    public List<GalleryItem> fetchRecentPhotos(Integer page) {
+        String url = buildUrl(FETCH_RECENTS_METHOD, null, page);
         return downloadGalleryItems(url);
     }
 
-    public List<GalleryItem> searchPhotos(String query) {
-        String url = buildUrl(SEARCH_METHOD, query);
+    public List<GalleryItem> searchPhotos(String query, Integer page) {
+        String url = buildUrl(SEARCH_METHOD, query, page);
         return downloadGalleryItems(url);
     }
 
 
-    private String buildUrl(String method, String query) {
+    private String buildUrl(String method, String query, Integer page) {
         Uri.Builder uriBuilder = ENDPOINT.buildUpon().appendQueryParameter("method", method);
 
         if (method.equals(SEARCH_METHOD)) {
             uriBuilder.appendQueryParameter("text", query);
         }
+        uriBuilder.appendQueryParameter("page", page.toString());
         return uriBuilder.build().toString();
     }
 
     private List<GalleryItem> downloadGalleryItems(String url) {
+        List<GalleryItem> galleryItems = new ArrayList<>();
         try {
             String jsonString = getUrlString(url);
             Log.i(TAG, "Received JSON: " + jsonString);
             JSONObject jsonBody = new JSONObject(jsonString);
 //            parseItems(items, jsonBody);
-            items = parseItemsByGson(jsonBody);
+            galleryItems = parseItemsByGson(jsonBody);
         } catch (JSONException e) {
             Log.e(TAG, "Failed to parse JSON", e);
         } catch (IOException e) {
             Log.e(TAG, "Failed to fetch items", e);
         }
 
-        return items;
+        return galleryItems;
     }
 
     private List<GalleryItem> parseItemsByGson(JSONObject jsonBody) throws JSONException {
         Gson gson = new GsonBuilder().create();
         JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
         JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
-        return Arrays.asList(gson.fromJson(photoJsonArray.toString(), GalleryItem[].class));
+        Type type = new TypeToken<List<GalleryItem>>(){}.getType();
+        return gson.fromJson(photoJsonArray.toString(), type);
     }
 
     private void parseItems(List<GalleryItem> items, JSONObject jsonBody) throws JSONException {

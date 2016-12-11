@@ -24,6 +24,7 @@ public class PollService extends IntentService {
     private static final String TAG = "PollService";
     private static final long POLL_INTERNAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
     public static final String ACTION_SHOW_NOTIFICATION = "net.claztec.android.photogallery.SHOW_NOTIFICATION";
+    private int currentPage = 1;
 
     public static Intent newIntent(Context context) {
         return new Intent(context, PollService.class);
@@ -64,9 +65,9 @@ public class PollService extends IntentService {
         List<GalleryItem> items;
 
         if (query == null) {
-            items = new FlickrFetchr().fetchRecentPhotos();
+            items = new FlickrFetchr().fetchRecentPhotos(currentPage);
         } else {
-            items = new FlickrFetchr().searchPhotos(query);
+            items = new FlickrFetchr().searchPhotos(query, currentPage);
         }
 
         if (items.size() == 0) {
